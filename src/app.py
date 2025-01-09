@@ -3,6 +3,7 @@ from flask import Flask
 from config import config
 #Rutas
 from routes import Login
+from routes import Personas
 
 app = Flask(__name__)
 
@@ -15,6 +16,7 @@ if __name__ == '__main__':
     #blueprints
     #url prefix es para que todas las rutas de login tengan un prefijo
     app.register_blueprint(Login.main, url_prefix='/login')
+    app.register_blueprint(Personas.main, url_prefix='/personas')
 
     #manejo de errores
     app.register_error_handler(404, page_not_found)
