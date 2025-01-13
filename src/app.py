@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_bcrypt import Bcrypt
 
 from config import config
 #Rutas
@@ -6,6 +7,7 @@ from routes import Login
 from routes import Personas
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 #para gestion de error
 def page_not_found(error):
