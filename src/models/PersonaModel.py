@@ -23,10 +23,14 @@ class PersonaModel():
   
     @classmethod
     def registrar(self, persona):
+        '''
+        Registra una persona en la base de datos.
+        Args:
+            persona (Persona): Objeto de la clase Persona con los datos de la persona a registrar.
+        '''
         try:
             connection=get_connection()
             hashed_password = generate_password_hash(persona.contrasenia,12)
-            print(f"Hash generado: {hashed_password}")
             with connection.cursor() as cursor:
                 cursor.execute('''INSERT INTO personas (usuario, dniPer, apePer, nombrePer, contrasena, mail) VALUES (%s, %s, %s, %s, %s, %s)''', (persona.usuario, persona.dni, persona.apellido, persona.nombre, hashed_password, persona.mail))
                 filasAfectadas = cursor.rowcount
@@ -42,3 +46,26 @@ class PersonaModel():
             raise Exception(ex)
         finally:
             connection.close()
+
+    @classmethod
+    def obtenerPersona(self, dni):
+        '''
+        Obtiene una persona por su DNI. Devuelve una lista de diccionarios con los datos de las personas con el
+        mismo dni.
+        Args:
+            dni (str): DNI de la persona a buscar.
+        '''
+        try:
+            connection=get_connection()
+            personas = []
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p LEFT JOIN empleados e ON p.usuario = e.usuario WHERE p.dniPer = %s', (dni,))
+                result = cursor.fetchall()
+                for persona in result:
+                    persona = Persona(persona[1], persona[3], persona[2], persona[4], persona[0], persona[5])
+                    personas.append(persona.to_JSON())
+                print(personas)
+            connection.close()
+            return personas
+        except Exception as ex:
+            raise Exception(ex)        

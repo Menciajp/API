@@ -1,8 +1,6 @@
 from flask_bcrypt import check_password_hash
-from flask_bcrypt import generate_password_hash
 from database.db import get_connection
 from .entities.Persona import Persona
-from utils.EncripContrasena import EncripContrasena
 
 class LoginModel:
     @classmethod
@@ -34,11 +32,9 @@ class LoginModel:
                 stored_password = result[0].tobytes()  
                 # Verificar la contraseña
                 if check_password_hash(stored_password, contrasenia):
-                    cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p LEFT JOIN empleados e ON p.usuario = %s''', (usuario,))
+                    cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p LEFT JOIN empleados e ON p.usuario = e.usuario WHERE p.usuario = %s''', (usuario,))
                     result = cursor.fetchone()
-                    print(result)
                     persona = Persona(result[1], result[3], result[2], result[0], result[4], result[5])
-                    print(persona.to_JSON())
             connection.close()
             return persona
         except Exception as ex:
