@@ -58,3 +58,31 @@ class Security:
             except (jwt.ExpiredSignatureError,jwt.InvalidTokenError):
                 return False
         return False    
+    
+    @classmethod
+    def get_user_from_token(cls, headers):
+        """
+        Decodifica un token JWT y extrae el usuario.
+        
+        Args:
+            headers (dict): Encabezados de la petición HTTP.
+        
+        Returns:
+            str: El usuario extraído del token si es válido, o None si no lo es.
+        """
+        if 'Authorization' in headers:
+            autorizacion = headers['Authorization']
+            token = autorizacion.split(' ')[1]  # Extrae el token del encabezado
+            
+            try:
+                payload = jwt.decode(token, cls.secret, algorithms=['HS256'])
+                return payload.get('usuario')  # Devuelve el usuario
+            except jwt.ExpiredSignatureError:
+                print("El token ha expirado.")
+                return None
+            except jwt.InvalidTokenError:
+                print("El token es inválido.")
+                return None
+        
+        print("El encabezado 'Authorization' no está presente.")
+        return None

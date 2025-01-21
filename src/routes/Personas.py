@@ -66,3 +66,18 @@ def obtener(DNI):
             return jsonify({'message': 'Error al intentar utilizar la base de datos'}), 500
     else:
         return jsonify({'error': 'No autorizado'}), 401    
+    
+@main.route('/preceptores', methods=['GET'])
+def obtenerPreceptores():
+    # Sirve para obtener todos los preceptores
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        try:
+            preceptores = PersonaModel.obtenerPreceptores()
+            if preceptores != []:
+                return jsonify(preceptores), 200
+            return jsonify({'message': 'No se encontraron preceptores'}), 404
+        except Exception as e:
+            return jsonify({'message': 'Error al intentar utilizar la base de datos'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401    

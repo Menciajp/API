@@ -68,4 +68,23 @@ class PersonaModel():
             connection.close()
             return personas
         except Exception as ex:
-            raise Exception(ex)        
+            raise Exception(ex) 
+
+    @classmethod
+    def obtenerPreceptores(self):
+        '''
+        Obtiene todos los preceptores de la base de datos.
+        '''
+        try:
+            connection=get_connection()
+            preceptores = []
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p JOIN empleados e ON p.usuario = e.usuario WHERE e.rol = %s', ('PRECEPTOR',))
+                result = cursor.fetchall()
+                for preceptor in result:
+                    preceptor = Persona(dni=preceptor[1], nombre=preceptor[3], apellido=preceptor[2], mail=preceptor[4], usuario=preceptor[0], rol=preceptor[5])
+                    preceptores.append(preceptor.to_JSON())
+            connection.close()
+            return preceptores
+        except Exception as ex:
+            raise Exception(ex)       

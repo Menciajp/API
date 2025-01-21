@@ -49,4 +49,113 @@ def registrar():
                 return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
     else:
         return jsonify({'error': 'No autorizado'}), 401
+
+@main.route('/curso', methods=['POST'])
+def asignarCurso():
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        try:
+            # Campos requeridos
+            required_fields = ['id','curso','anio']
+            
+            # Obtener datos de la solicitud
+            data = request.json
+            
+            # Validar que existan y no estén vacíos
+            empty_fields = [field for field in required_fields if not data.get(field) or data.get(field).strip() == ""]
+            if empty_fields:
+                return jsonify({'error': f"Los siguientes campos están vacíos: {', '.join(empty_fields)}"}), 400
+            
+            # Extraer datos
+            id = data['id']
+            curso = data['curso']
+            año = data['anio']
+            respuesta = AlumnoModel.asignarCurso(id,curso,año)
+            if respuesta == 1:
+                return jsonify({'message': 'Alumno asignado al curso correctamente'}), 201
+            else:
+                return jsonify({'message': 'No se pudo asignar el alumno al curso'}), 500
+        except errors.UniqueViolation:
+            return jsonify({'message': 'El alumno ya está asignado al curso'}), 400
+        except Exception as e:
+            error_message = str(e) 
+            if "llave duplicada viola restricción de unicidad" in error_message:
+                return jsonify({'error': 'El alumno ya está asignado al curso'}), 400
+            elif "no puede ser nulo" in error_message:
+                return jsonify({'error': 'Faltan datos obligatorios'}), 400
+            else:
+                return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401    
     
+@main.route('/tutor', methods=['POST'])
+def asignarTutor():
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        
+        # Campos requeridos
+        required_fields = ['idAlu','usuarioTutor']
+            
+        # Obtener datos de la solicitud
+        data = request.json
+            
+        # Validar que existan y no estén vacíos
+        empty_fields = [
+            field for field in required_fields
+            if not data.get(field) or
+            (isinstance(data.get(field), str) and data.get(field).strip() == "") or
+            (isinstance(data.get(field), list) and len(data.get(field)) == 0)
+        ]
+        if empty_fields:
+            return jsonify({'error': f"Los siguientes campos están vacíos: {', '.join(empty_fields)}"}), 400
+            
+        idAlu = data['idAlu']
+        tutor = data['usuarioTutor']
+        
+        # Lista de tutores que no pudieron ser asignados
+        tutoresNoAsignados = []
+
+        for usuario in tutor:
+            try:
+                respuesta = AlumnoModel.asignarTutor(idAlu, usuario)
+                if respuesta != 1:
+                    tutoresNoAsignados.append(usuario)
+            except Exception as e:
+                error_message = str(e)
+                if "llave duplicada viola restricción de unicidad" in error_message:
+                    tutoresNoAsignados.append(usuario)
+                elif "no puede ser nulo" in error_message:
+                    return jsonify({'error': 'Faltan datos obligatorios'}), 400
+                else:
+                    return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
+
+        # Verificar si hay tutores que no pudieron asignarse
+        if len(tutoresNoAsignados) == 0:
+            return jsonify({'message': 'Todos los tutores fueron asignados correctamente.'}), 201
+        elif len(tutoresNoAsignados) < len(tutor):
+            return jsonify({
+                'message': 'Algunos tutores fueron asignados correctamente.',
+                'tutoresNoAsignados': tutoresNoAsignados
+            }), 207  # Estado 207: Multi-Status (algunas operaciones fallaron)
+        else:
+            return jsonify({
+                'message': 'No se pudo asignar ninguno de los tutores.',
+                'tutoresNoAsignados': tutoresNoAsignados
+            }), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401
+    
+@main.route('/<nombreCurso>/<anio>', methods=['GET'])
+def recuperarAlumnos(nombreCurso,anio):
+    '''
+    Recupera todos los alumnos de un curso
+    '''
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN","PRECEPTOR"})
+    if acceso:
+        try:
+            alumnos = AlumnoModel.recuperarAlumnos(nombreCurso,anio)
+            return jsonify(alumnos), 200
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401

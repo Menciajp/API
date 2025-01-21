@@ -29,3 +29,76 @@ def registrar(nombreCurso,anio):
                 return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
     else:
         return jsonify({'error': 'No autorizado'}), 401
+
+@main.route('/asignarPreceptor', methods=['POST'])
+def asignarPreceptor():
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        # Campos requeridos
+        required_fields = ['nombreCurso','anioCurso','usuarioPreceptor']
+            
+        # Obtener datos de la solicitud
+        data = request.json
+            
+        # Validar que existan y no estén vacíos
+        empty_fields = [
+            field for field in required_fields
+            if not data.get(field) or
+            (isinstance(data.get(field), str) and data.get(field).strip() == "") or
+            (isinstance(data.get(field), list) and len(data.get(field)) == 0)
+        ]
+        if empty_fields:
+            return jsonify({'error': f"Los siguientes campos están vacíos: {', '.join(empty_fields)}"}), 400
+            
+        nombreCurso = data['nombreCurso']
+        anio = data['anioCurso']
+        usuarioPreceptor = data['usuarioPreceptor']
+        
+        # Lista de tutores que no pudieron ser asignados
+        preceptoresNoAsignados = []
+
+        for usuario in usuarioPreceptor:
+            try:
+                respuesta = CursoModel.asignarPreceptor(nombreCurso, anio ,usuario)
+                if respuesta != 1:
+                    preceptoresNoAsignados.append(usuario)
+            except Exception as e:
+                error_message = str(e)
+                if "llave duplicada viola restricción de unicidad" in error_message:
+                    preceptoresNoAsignados.append(usuario)
+                elif "no puede ser nulo" in error_message:
+                    return jsonify({'error': 'Faltan datos obligatorios'}), 400
+                else:
+                    return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
+
+        # Verificar si hay tutores que no pudieron asignarse
+        if len(preceptoresNoAsignados) == 0:
+            return jsonify({'message': 'Todos los tutores fueron asignados correctamente.'}), 201
+        elif len(preceptoresNoAsignados) < len(usuarioPreceptor):
+            return jsonify({
+                'message': 'Algunos tutores fueron asignados correctamente.',
+                'tutoresNoAsignados': preceptoresNoAsignados
+            }), 207  # Estado 207: Multi-Status (algunas operaciones fallaron)
+        else:
+            return jsonify({
+                'message': 'No se pudo asignar ninguno de los tutores.',
+                'tutoresNoAsignados': preceptoresNoAsignados
+            }), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401
+    
+@main.route('/preceptor', methods=['GET'])
+def obtenerCursosPreceptor():
+    acceso = Security.verify_token(request.headers,{"PRECEPTOR"})
+    if acceso:
+        try:
+            # Se saca el usuario del preceptor del token
+            curso = CursoModel.obtenerCursosPreceptor(Security.get_user_from_token(request.headers))
+            if curso:
+                return jsonify({'cursos': curso}), 200
+            else:
+                return jsonify({'message': 'No se encontraron cursos para este usuario.'}), 404
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401

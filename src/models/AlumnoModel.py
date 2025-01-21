@@ -1,4 +1,5 @@
 from database.db import get_connection
+from utils.DateFormat import DateFormat
 
 class AlumnoModel():
     @classmethod
@@ -17,6 +18,74 @@ class AlumnoModel():
                 print("Se registro un alumno correctamente")
             
             return filasAfectadas
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+    
+    @classmethod
+    def asignarCurso(cls,id, curso, anio):
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute('''INSERT INTO alu_curso ("idalu", "nombrecurso", "anio") VALUES (%s, %s, %s)''', (id,curso,anio))
+                filasAfectadas = cursor.rowcount
+                connection.commit()   
+                print("Se asigno un alumno a un curso correctamente.")
+            
+            return filasAfectadas
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+
+    @classmethod
+    def asignarTutor(cls, idAlumno, usuarioTutor):
+        '''
+        Asigna un tutor a un alumno.
+        args:
+            idAlumno (int): ID del alumno.
+            usuarioTutor (str): Usuario del tutor.
+        '''
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute('''INSERT INTO tutor_alu ("usuario", "idalu") VALUES (%s, %s)''', (usuarioTutor,idAlumno))
+                filasAfectadas = cursor.rowcount
+                connection.commit()   
+                print("Se asigno un tutor a un alumno correctamente.")
+            
+            return filasAfectadas
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+
+    @classmethod
+    def recuperarAlumnos(cls,nombreCurso,anio):
+        '''
+        Recupera todos los alumnos registrados en la base de datos.
+        args:
+        nombreCurso (str): Nombre del curso.
+        anio (int): Año del curso.
+        '''
+        try:
+            connection=get_connection()
+            alumnos = []
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT * FROM alumnos WHERE idalu IN (SELECT idalu FROM alu_curso WHERE nombrecurso=%s AND anio=%s)''',(nombreCurso,anio))
+                respuesta = cursor.fetchall()
+                for alumno in respuesta:
+                    alumnos.append({
+                        'idAlu': alumno[0],
+                        'nombre': alumno[3],
+                        'apellido': alumno[2],
+                        'dni': alumno[1],
+                        'fechIngreso': DateFormat.convert_date_to_string(alumno[4]),
+                        'fechNac': DateFormat.convert_date_to_string(alumno[5]),
+                        'estado': alumno[6]
+                    })
+                return alumnos
         except Exception as ex:
             raise Exception(ex)
         finally:
