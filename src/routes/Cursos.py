@@ -1,6 +1,7 @@
 #para poder hacer "sistema de rutas"
 from flask import Blueprint, jsonify, request
 from psycopg2 import errors
+from datetime import datetime
 #modelos
 from models.CursoModel import CursoModel
 #seguridad
@@ -93,9 +94,25 @@ def obtenerCursosPreceptor():
     if acceso:
         try:
             # Se saca el usuario del preceptor del token
-            curso = CursoModel.obtenerCursosPreceptor(Security.get_user_from_token(request.headers))
-            if curso:
-                return jsonify({'cursos': curso}), 200
+            cursos = CursoModel.obtenerCursosPreceptor(Security.get_user_from_token(request.headers))
+            if cursos:
+                return jsonify({'cursos': cursos}), 200
+            else:
+                return jsonify({'message': 'No se encontraron cursos para este usuario.'}), 404
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401
+
+@main.route('/', methods =['GET'])
+def obtenerCursos():
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        try:
+            anio = str(datetime.now().year)
+            cursos = CursoModel.obtenerCursos(anio)
+            if cursos:
+                return jsonify({'cursos': cursos}), 200
             else:
                 return jsonify({'message': 'No se encontraron cursos para este usuario.'}), 404
         except Exception as e:

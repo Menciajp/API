@@ -1,5 +1,6 @@
 from database.db import get_connection
 from utils.DateFormat import DateFormat
+import datetime
 
 class AlumnoModel():
     @classmethod
@@ -64,7 +65,7 @@ class AlumnoModel():
     @classmethod
     def recuperarAlumnos(cls,nombreCurso,anio):
         '''
-        Recupera todos los alumnos registrados en la base de datos.
+        Recupera todos los alumnos registrados en la base de datos registrados en un curso determinado.
         args:
         nombreCurso (str): Nombre del curso.
         anio (int): Año del curso.
@@ -86,6 +87,49 @@ class AlumnoModel():
                         'estado': alumno[6]
                     })
                 return alumnos
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+    
+    @classmethod
+    def cargarAsistencia(cls, alumno, fecha):
+        '''
+        Registra la asistencia de un alumno en la base de datos en una fecha determinada.
+        args:
+            alumno(obj): Objeto de la clase Alumno. {'id':int, 'estado':str}
+            fecha (str): Fecha de la asistencia.
+        '''
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute('''INSERT INTO asistencias ("idalu", "fecha","tipo") VALUES (%s, %s,%s)''', (alumno['id'], fecha,alumno['estado'].upper()))
+                filasAfectadas = cursor.rowcount
+                connection.commit()   
+                print("Se registro la asistencia de un alumno correctamente.")
+            
+            return filasAfectadas
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+
+    @classmethod
+    def situacionAlumno(cls,id):
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT tipo, COUNT(*) AS cantidad FROM asistencias
+                                WHERE idAlu = %s AND tipo IN ('TARDANZA', 'FALTA') AND 
+                               EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM CURRENT_DATE)GROUP BY tipo;''', (id,))
+
+                respuesta = cursor.fetchall()
+                respuesta = {item[0]: item[1] for item in respuesta}
+                if 'TARDANZA' not in respuesta:
+                    respuesta['TARDANZA'] = 0
+                if 'FALTA' not in respuesta:
+                    respuesta['FALTA'] = 0
+                return respuesta
         except Exception as ex:
             raise Exception(ex)
         finally:

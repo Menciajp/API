@@ -1,7 +1,7 @@
 from database.db import get_connection
 from flask_bcrypt import generate_password_hash
 from .entities.Persona import Persona
-from utils.EncripContrasena import EncripContrasena
+from .entities.Alumno import Alumno
 
 class PersonaModel():
     # Este metodo es para traer a todas las personas de la bd con su rol, si rol es nulo son tutores. 
@@ -87,4 +87,29 @@ class PersonaModel():
             connection.close()
             return preceptores
         except Exception as ex:
-            raise Exception(ex)       
+            raise Exception(ex)
+
+    @classmethod
+    def obtenerAlumnosAsociados(self, usuario):
+        '''
+        Obtiene los alumnos asociados a un usuario.
+        Args:
+            usuario(str): usuario del tutor que realiza la peticion
+        '''
+        connection = get_connection()
+        alumnos = []
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT a.nombrealu,a.apealu,a.dnialu,a.idalu FROM alumnos a JOIN tutor_alu t ON a.idalu = t.idalu WHERE t.usuario = %s AND a.estado = %s',(usuario,'ACTIVO'))
+                result = cursor.fetchall()
+                for alumno in result:
+                    alumnos.append({
+                            'idAlu': alumno[3],
+                            'nombre': alumno[0],
+                            'apellido': alumno[1],
+                            'dni': alumno[2],
+                        })
+                connection.close()
+                return alumnos    
+        except Exception as ex:
+            raise Exception(ex)    

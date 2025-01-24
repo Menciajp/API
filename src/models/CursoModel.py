@@ -67,3 +67,23 @@ class CursoModel():
             raise Exception(ex)
         finally:
             connection.close()
+    
+    @classmethod
+    def obtenerCursos(cls,anio):
+        '''
+        Obtiene todos los cursos registrados en la base de datos.
+        '''
+        try:
+            connection=get_connection()
+            cursos = []
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT * FROM cursos WHERE anio = %s''', (anio,))
+                respuesta = cursor.fetchall()
+                for curso in respuesta:
+                    cursos.append(Curso(curso[0],curso[1]).to_JSON())
+                print("Se obtuvieron los cursos correctamente")
+            return cursos
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
