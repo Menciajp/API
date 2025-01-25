@@ -10,7 +10,7 @@ from routes import Cursos
 from routes import Alumnos
 from routes import Tutores
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5501"}})
+CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}})
 bcrypt = Bcrypt(app)
 
 
