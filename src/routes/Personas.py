@@ -35,10 +35,13 @@ def registrar():
             rol = data['rol'].upper()
             contrasenia = data['contrasenia']
             persona = Persona(dni=dni, nombre=nombre, apellido=apellido, usuario=usuario, mail=mail, rol=rol, contrasenia=contrasenia)
-            respuesta = PersonaModel.registrar(persona)
+            if PersonaModel.obtenerPersona(dni) != []:
+                respuesta = 1
+            else: 
+                respuesta = PersonaModel.registrar(persona)
             if respuesta == 1:
-                return jsonify({'message': 'Usuario registrado correctamente'}), 201
-            return jsonify({'message': 'Error al registrar el usuario'}), 500
+                return jsonify({'message': 'Persona registrada.'}), 201
+            return jsonify({'message': 'Error al registrar el usuario.'}), 500
         except errors.UniqueViolation:
             return jsonify({'message': 'El usuario ya existe'}), 400
         except Exception as e:
@@ -61,7 +64,7 @@ def obtener(DNI):
             persona = PersonaModel.obtenerPersona(DNI)
             if persona != []:
                 return (persona), 200
-            return jsonify({'message': 'No se encontró la persona'}), 404
+            return jsonify({'message': 'No se encontró la persona.'}), 404
         except Exception as e:
             return jsonify({'message': 'Error al intentar utilizar la base de datos'}), 500
     else:

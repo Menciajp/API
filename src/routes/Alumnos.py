@@ -15,13 +15,19 @@ def registrar():
     if acceso:
         try:
             # Campos requeridos
-            required_fields = ['dni', 'nombre', 'apellido', 'fechNac']
+            required_fields = ['dni', 'nombre', 'apellido', 'fechNac','usuarioTutor']
             
             # Obtener datos de la solicitud
             data = request.json
             
             # Validar que existan y no estén vacíos
-            empty_fields = [field for field in required_fields if not data.get(field) or data.get(field).strip() == ""]
+            # Validar que existan y no estén vacíos
+            empty_fields = [
+                field for field in required_fields
+                if not data.get(field) or
+                (isinstance(data.get(field), str) and data.get(field).strip() == "") or
+                (isinstance(data.get(field), list) and len(data.get(field)) == 0)
+            ]
             if empty_fields:
                 return jsonify({'error': f"Los siguientes campos están vacíos: {', '.join(empty_fields)}"}), 400
             
@@ -31,24 +37,38 @@ def registrar():
             apellido = data['apellido']
             fechNac = data['fechNac']
             fechIngreso = datetime.now().date().strftime('%Y-%m-%d')
+            tutor = data['usuarioTutor']
             alumno = Alumno(dni=dni, nombre=nombre, apellido=apellido, fechNac=fechNac, fechIngreso=fechIngreso)
             respuesta = AlumnoModel.crearAlumno(alumno)
             if respuesta == 1:
-                return jsonify({'message': 'Alumno registrado correctamente'}), 201
-            else:
-                return jsonify({'message': 'No se pudo registrar el alumno'}), 500
+                # Lista de tutores que no pudieron ser asignados
+                tutoresNoAsignados = []
+                idAlu = AlumnoModel.obtenerIdAlumno(dni, nombre, apellido)
+                for usuario in tutor:
+                    try:
+                        if AlumnoModel.asignarTutor(idAlu, usuario) != 1:
+                            tutoresNoAsignados.append(usuario)
+                    except Exception as e:
+                        if "llave duplicada viola restricción de unicidad" in str(e):
+                            tutoresNoAsignados.append(usuario)
+                        else:
+                            raise
+
+                # Preparar respuesta
+                response = {'message': 'Alumno registrado correctamente'}
+                if tutoresNoAsignados:
+                    response['warning'] = f"Los siguientes tutores no pudieron ser asignados: {', '.join(tutoresNoAsignados)}"
+                return jsonify(response), 201
         except errors.UniqueViolation:
-            return jsonify({'message': 'El alumno ya existe'}), 400
+            return jsonify({'error': 'El alumno ya existe'}), 400
         except Exception as e:
-            error_message = str(e) 
+            error_message = str(e)
             if "llave duplicada viola restricción de unicidad" in error_message:
                 return jsonify({'error': 'El alumno ya existe'}), 400
             elif "no puede ser nulo" in error_message:
                 return jsonify({'error': 'Faltan datos obligatorios'}), 400
             else:
                 return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
-    else:
-        return jsonify({'error': 'No autorizado'}), 401
 
 @main.route('/curso', methods=['POST'])
 def asignarCurso():

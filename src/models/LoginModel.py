@@ -34,7 +34,7 @@ class LoginModel:
                 if check_password_hash(stored_password, contrasenia):
                     cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p LEFT JOIN empleados e ON p.usuario = e.usuario WHERE p.usuario = %s''', (usuario,))
                     result = cursor.fetchone()
-                    persona = Persona(result[1], result[3], result[2], result[0], result[4], result[5])
+                    persona = Persona(usuario=result[0], dni=result[1], apellido=result[2], nombre=result[3], mail=result[4], rol=result[5])
             connection.close()
             return persona
         except Exception as ex:

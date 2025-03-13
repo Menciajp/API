@@ -134,3 +134,16 @@ class AlumnoModel():
             raise Exception(ex)
         finally:
             connection.close()
+
+    @classmethod
+    def obtenerIdAlumno(cls,dni,nombre,apellido):
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT idalu FROM alumnos WHERE dnialu=%s AND nombrealu=%s AND apealu=%s''',(dni,nombre,apellido))
+                respuesta = cursor.fetchone()
+                return respuesta[0]
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()        

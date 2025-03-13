@@ -29,7 +29,8 @@ def login():
         persona = LoginModel.login(usuario,contrasenia)
         if persona != None:
             encoded_token = Security.generate_token(persona)
-            return jsonify({'success':True, 'token': encoded_token, 'rol' : persona.rol, 'usuario': persona.usuario}, ), 200
+            # Ahora tambien devuelve nombres 6/3 
+            return jsonify({'success':True, 'token': encoded_token, 'rol' : persona.rol, 'usuario': persona.usuario, 'nombre':persona.nombre}, ), 200
         else:
             return jsonify({'message': 'Usuario o contraseña incorrectos'}), 404
     except Exception as e:

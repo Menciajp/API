@@ -35,7 +35,7 @@ class PersonaModel():
                 cursor.execute('''INSERT INTO personas (usuario, dniPer, apePer, nombrePer, contrasena, mail) VALUES (%s, %s, %s, %s, %s, %s)''', (persona.usuario, persona.dni, persona.apellido, persona.nombre, hashed_password, persona.mail))
                 filasAfectadas = cursor.rowcount
                 connection.commit()   
-                if persona.rol != "tutor":
+                if persona.rol != "TUTOR":
                     cursor.execute('''INSERT INTO empleados (usuario, rol) VALUES (%s, %s)''', (persona.usuario, persona.rol))
                     filasAfectadas = cursor.rowcount
                     connection.commit() 
@@ -62,9 +62,8 @@ class PersonaModel():
                 cursor.execute('SELECT p.usuario, p.dniPer, p.apePer, p.nombrePer, p.mail, e.rol FROM personas p LEFT JOIN empleados e ON p.usuario = e.usuario WHERE p.dniPer = %s', (dni,))
                 result = cursor.fetchall()
                 for persona in result:
-                    persona = Persona(persona[1], persona[3], persona[2], persona[4], persona[0], persona[5])
+                    persona = Persona(dni=persona[1], nombre=persona[3], apellido=persona[2], mail=persona[4], usuario=persona[0], rol=persona[5])
                     personas.append(persona.to_JSON())
-                print(personas)
             connection.close()
             return personas
         except Exception as ex:

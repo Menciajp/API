@@ -90,15 +90,15 @@ def asignarPreceptor():
 
         # Verificar si hay tutores que no pudieron asignarse
         if len(preceptoresNoAsignados) == 0:
-            return jsonify({'message': 'Todos los tutores fueron asignados correctamente.'}), 201
+            return jsonify({'message': 'Todos los preceptores fueron asignados correctamente.'}), 201
         elif len(preceptoresNoAsignados) < len(usuarioPreceptor):
             return jsonify({
-                'message': 'Algunos tutores fueron asignados correctamente.',
-                'tutoresNoAsignados': preceptoresNoAsignados
+                'message': 'Algunos preceptores fueron asignados correctamente.',
+                'preceptoresNoAsignados': preceptoresNoAsignados
             }), 207  # Estado 207: Multi-Status (algunas operaciones fallaron)
         else:
             return jsonify({
-                'message': 'No se pudo asignar ninguno de los tutores.',
+                'message': 'No se pudo asignar ninguno de los preceptores.',
                 'tutoresNoAsignados': preceptoresNoAsignados
             }), 500
     else:
@@ -120,6 +120,22 @@ def obtenerCursosPreceptor():
     else:
         return jsonify({'error': 'No autorizado'}), 401
 
+@main.route('/preceptor/<nombreCurso>/<anio>', methods=['GET'])
+def obtenerPreceptoresDeCurso(nombreCurso,anio):
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
+    if acceso:
+        try:
+            # Se saca el usuario del preceptor del token
+            preceptores = CursoModel.obtenerPreceptoresCurso(nombreCurso,anio)
+            if preceptores:
+                return jsonify({'preceptores': preceptores}), 200
+            else:
+                return jsonify({'message': 'No se encontraron preceptores para este curso.'}), 404
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401
+    
 @main.route('/', methods =['GET'])
 def obtenerCursos():
     acceso = Security.verify_token(request.headers,{"SUDO","ADMIN"})
@@ -130,7 +146,7 @@ def obtenerCursos():
             if cursos:
                 return jsonify({'cursos': cursos}), 200
             else:
-                return jsonify({'message': 'No se encontraron cursos para este usuario.'}), 404
+                return jsonify({'message': 'No se encontraron cursos.'}), 404
         except Exception as e:
             return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
     else:

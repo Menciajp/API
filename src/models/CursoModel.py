@@ -67,6 +67,26 @@ class CursoModel():
             raise Exception(ex)
         finally:
             connection.close()
+
+    @classmethod
+    def obtenerPreceptoresCurso(cls,nombreCurso,anio):
+        '''
+        Obtiene todos los preceptores asociados a un curso en la base de datos.
+        '''
+        try:
+            connection=get_connection()
+            preceptores = []
+            with connection.cursor() as cursor:
+                cursor.execute('''SELECT p.usuario, p.nombreper, p.apeper FROM personas p INNER JOIN precep_curso c ON p.usuario = c.usuario WHERE c.nombrecurso = %s AND c.anio = %s;''', (nombreCurso,anio,))
+                respuesta = cursor.fetchall()
+                for persona in respuesta:
+                    preceptores.append({"usuario":persona[0],"nombre":persona[1],"apellido":persona[2]})
+                print("Se obtuvieron los preceptores correctamente")
+            return preceptores
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()        
     
     @classmethod
     def obtenerCursos(cls,anio):
