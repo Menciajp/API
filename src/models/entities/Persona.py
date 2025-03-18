@@ -1,6 +1,6 @@
 
 class Persona():
-    def __init__(self, dni, nombre, apellido, usuario, mail=None, rol = None, contrasenia=None):
+    def __init__(self, dni, nombre, apellido, usuario, mail=None, rol = "TUTOR", contrasenia=None):
         self.dni = dni
         self.nombre = nombre
         self.apellido = apellido

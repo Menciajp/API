@@ -119,16 +119,31 @@ class AlumnoModel():
         try:
             connection=get_connection()
             with connection.cursor() as cursor:
-                cursor.execute('''SELECT tipo, COUNT(*) AS cantidad FROM asistencias
-                                WHERE idAlu = %s AND tipo IN ('TARDANZA', 'FALTA') AND 
-                               EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM CURRENT_DATE)GROUP BY tipo;''', (id,))
-
+                # Primer query para el resumen
+                cursor.execute('''
+                    SELECT tipo, COUNT(*) AS cantidad
+                    FROM asistencias
+                    WHERE idAlu = %s AND tipo IN ('TARDANZA', 'FALTA') AND
+                    EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM CURRENT_DATE)
+                    GROUP BY tipo;
+                ''', (id,))
                 respuesta = cursor.fetchall()
                 respuesta = {item[0]: item[1] for item in respuesta}
                 if 'TARDANZA' not in respuesta:
                     respuesta['TARDANZA'] = 0
                 if 'FALTA' not in respuesta:
                     respuesta['FALTA'] = 0
+                # Segundo query para el detalle
+                cursor.execute('''
+                    SELECT fecha, tipo
+                    FROM asistencias
+                    WHERE idAlu = %s AND tipo IN ('TARDANZA', 'FALTA') AND
+                    EXTRACT(YEAR FROM fecha) = EXTRACT(YEAR FROM CURRENT_DATE)
+                    ORDER BY fecha;
+                ''', (id,))
+                detalle = cursor.fetchall()
+                # Agregar detalle a respuesta
+                respuesta['detalle'] = [{'fecha': DateFormat.convert_date_to_string(fecha), 'tipo': tipo} for fecha, tipo in detalle]
                 return respuesta
         except Exception as ex:
             raise Exception(ex)
