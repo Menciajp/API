@@ -141,10 +141,8 @@ def asignarTutor():
                 if respuesta != 1:
                     tutoresNoAsignados.append(usuario)
             except Exception as e:
-                error_message = str(e)
-                if "llave duplicada viola restricción de unicidad" in error_message:
-                    tutoresNoAsignados.append(usuario)
-                elif "no puede ser nulo" in error_message:
+                error_message = str(e)           
+                if "no puede ser nulo" in error_message:
                     return jsonify({'error': 'Faltan datos obligatorios'}), 400
                 else:
                     return jsonify({'error': f'Ocurrió un error inesperado: {error_message}'}), 500
@@ -215,9 +213,7 @@ def cargarAsistencia():
                         asistenciasNoCargadas.append(alumno)
                 except Exception as e:
                     error_message = str(e)
-                    if "llave duplicada viola restricción de unicidad" in error_message:
-                        asistenciasNoCargadas.append(alumno)
-                    elif "no puede ser nulo" in error_message:
+                    if "no puede ser nulo" in error_message:
                         return jsonify({'error': 'Faltan datos obligatorios'}), 400
                     else:
                         asistenciasNoCargadas.append(alumno)
@@ -226,12 +222,12 @@ def cargarAsistencia():
             elif len(asistenciasNoCargadas) < len(alumnos):
                 return jsonify({
                 'message': 'Algunas asistencias fueron cargadas correctamente.',
-                'alumnos no cargados': asistenciasNoCargadas
+                'AsistenciasNoCargadas': asistenciasNoCargadas
                 }), 207  # Estado 207: Multi-Status (algunas operaciones fallaron)
             else:
                 return jsonify({
                 'message': 'No se pudo guardar ninguna de las asistencias.',
-                'tutoresNoAsignados': asistenciasNoCargadas
+                'AsistenciasNoCargadas': asistenciasNoCargadas
                 }), 500
     else:
         return jsonify({'error': 'No autorizado'}), 401
