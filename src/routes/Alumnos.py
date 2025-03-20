@@ -246,3 +246,61 @@ def recuperarAsistencias(id):
             return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
     else:
         return jsonify({'error': 'No autorizado'}), 401
+
+@main.route('/asistencia/dni/<dni>', methods=['GET'])
+def recuperarAsistenciasDni(dni):
+    '''
+    Recupera todas las asistencias de un alumno por su dni
+    '''
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN","PRECEPTOR","TUTOR"})
+    if acceso:
+        try:
+            asistencias = AlumnoModel.situacionAlumnoDni(dni)
+            return jsonify(asistencias), 200
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401    
+
+@main.route('/desvincularCurso', methods=['DELETE'])
+def eliminarAlumno():
+    '''
+    Elimina un alumno y sus registros relacionados por su id, nombre de curso y anio.
+    Los datos se reciben en formato JSON.
+    '''
+    acceso = Security.verify_token(request.headers, {"SUDO", "ADMIN"})
+    if acceso:
+        try:
+            # Campos requeridos
+            required_fields = ['idAlu','nombreCurso','anio']
+                
+            # Obtener datos de la solicitud
+            data = request.json
+                
+            # Validar que existan y no estén vacíos
+            empty_fields = [
+                field for field in required_fields
+                if not data.get(field) or
+                (isinstance(data.get(field), str) and data.get(field).strip() == "") or
+                (isinstance(data.get(field), list) and len(data.get(field)) == 0)
+            ]
+            if empty_fields:
+                return jsonify({'error': f"Los siguientes campos están vacíos: {', '.join(empty_fields)}"}), 400
+            
+
+            # Llamar al modelo para eliminar el alumno
+            resultado = AlumnoModel.eliminarAlumnoDeCurso(data['idAlu'],data['nombreCurso'],data['anio'])
+
+            if resultado == True:
+                return jsonify({'message':'Alumno desvinculado de curso correctamente'}), 200
+            else:
+                return jsonify({'message':'Ocurrio un error al desvincular el alumno del curso'}), 404
+
+        except Exception as e:
+            return jsonify({
+                'message': f'Ocurrió un error inesperado: {str(e)}'
+            }), 500
+    else:
+        return jsonify({
+            'message': 'No autorizado'
+        }), 401    
