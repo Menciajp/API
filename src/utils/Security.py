@@ -26,7 +26,7 @@ class Security:
 
             # Crear el payload del token
             payload = {
-                'exp': datetime.datetime.now(tz=cls.tz) + datetime.timedelta(minutes=10),  # Expiración
+                'exp': datetime.datetime.now(tz=cls.tz) + datetime.timedelta(hours=2),  # Expiración
                 'iat': datetime.datetime.now(tz=cls.tz),  # Creación
                 'usuario': usuarioAutenticado.usuario,  # Usuario
                 'rol': usuarioAutenticado.rol  # Rol
