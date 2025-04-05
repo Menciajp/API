@@ -201,6 +201,27 @@ class AlumnoModel():
             connection.close()
 
     @classmethod
+    def infoAlumnoDni(cls,dni):
+        try:
+            connection=get_connection()
+            with connection.cursor() as cursor:
+                respuesta = {}
+                id = cls.obtenerIdAlumnoDni(dni)
+                #datos basicos del alumno 
+                cursor.execute('''
+                    SELECT nombrealu,apealu,estado,dnialu FROM alumnos  WHERE idalu = %s;''', (id,))
+                infoAlu = cursor.fetchone()
+                respuesta['id'] = id
+                respuesta['nombre'] = infoAlu[0]
+                respuesta['apellido'] = infoAlu[1]
+                respuesta['estado'] = infoAlu[2]
+                respuesta['dni'] = infoAlu[3]
+                return respuesta
+        except Exception as ex:
+            raise Exception(ex)
+        finally:
+            connection.close()
+    @classmethod
     def obtenerIdAlumno(cls,dni,nombre,apellido):
         try:
             connection=get_connection()

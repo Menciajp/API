@@ -252,7 +252,7 @@ def recuperarAsistenciasDni(dni):
     '''
     Recupera todas las asistencias de un alumno por su dni
     '''
-    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN","PRECEPTOR","TUTOR"})
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN","PRECEPTOR",})
     if acceso:
         try:
             asistencias = AlumnoModel.situacionAlumnoDni(dni)
@@ -262,6 +262,21 @@ def recuperarAsistenciasDni(dni):
     else:
         return jsonify({'error': 'No autorizado'}), 401    
 
+@main.route('/info/<dni>', methods=['GET'])
+def recuperarInfoDni(dni):
+    '''
+    Recupera información basica de un alumno por su dni 
+    '''
+    acceso = Security.verify_token(request.headers,{"SUDO","ADMIN","PRECEPTOR","TUTOR"})
+    if acceso:
+        try:
+            informacion = AlumnoModel.infoAlumnoDni(dni)
+            return jsonify(informacion), 200
+        except Exception as e:
+            return jsonify({'error': f'Ocurrió un error inesperado: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'No autorizado'}), 401
+    
 @main.route('/desvincularCurso', methods=['DELETE'])
 def eliminarAlumno():
     '''
